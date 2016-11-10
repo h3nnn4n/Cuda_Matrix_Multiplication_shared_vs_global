@@ -1,8 +1,8 @@
 #include <stdio.h>
 #include <cuda.h>
 #include <cuda_runtime.h>
-#include<sys/time.h>
-#include<time.h>
+#include <sys/time.h>
+#include <time.h>
 
 #include "info.h"
 
@@ -10,11 +10,31 @@ __global__ void matrix_mul(int *a, int *b, int *c) {
     int col = blockIdx.x * blockDim.x + threadIdx.x;
     int row = blockIdx.y * blockDim.y + threadIdx.y;
 
+    int posx = threadIdx.x;
+    int posy = threadIdx.y;
+
     c[row * N + col] = 0;
 
-    for ( int i = 0; i  < N ; i ++ ) {
-        c[row * N + col] += a[row * N + i] * b[i * N + col];
+    int step = 0;
+
+    for ( int w = 0; w < N/SHARED_BLOCK_SIZE; w++ ) {
+
+        __shared__ int as[SHARED_BLOCK_SIZE * SHARED_BLOCK_SIZE];
+        __shared__ int bs[SHARED_BLOCK_SIZE * SHARED_BLOCK_SIZE];
+
+        as[posy * N + posx] = a[row * N + col];
+        bs[posy * N + posx] = b[row * N + col];
+
+        __syncthreads();
+
+        for ( int i = 0; i  < N ; i ++ ) {
+            step += as[posy * N + i] * bs[i * N + posx];
+        }
+
+        __syncthreads();
     }
+
+    c[row * N + col] = step;
 }
 
 int main() {
@@ -46,7 +66,8 @@ int main() {
                 a[i*N + j] = 1;
                 b[i*N + j] = 1;
                 c[i*N + j] = 1;
-            } }
+            }
+        }
     }
 
 #ifdef __output
