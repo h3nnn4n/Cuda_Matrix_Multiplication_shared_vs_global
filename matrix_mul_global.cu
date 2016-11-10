@@ -80,6 +80,7 @@ int main() {
     matrix_mul<<< block, thread >>>(d_a, d_b, d_c);
     gettimeofday(&timevalB,NULL);
 
+    CudaCheckError();
 
     gpuErrchk( cudaMemcpy(c, d_c, size, cudaMemcpyDeviceToHost ));
 
