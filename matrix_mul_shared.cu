@@ -21,8 +21,11 @@ __global__ void matrix_mul(int *a, int *b, int *c) {
         __shared__ int as[SHARED_BLOCK_SIZE * SHARED_BLOCK_SIZE];
         __shared__ int bs[SHARED_BLOCK_SIZE * SHARED_BLOCK_SIZE];
 
-        as[posy * N + posx] = a[row * N + col];
-        bs[posy * N + posx] = b[row * N + col];
+        /*as[posy * SHARED_BLOCK_SIZE + posx] = a[    SHARED_BLOCK_SIZE * N * blockIdx.y + posy * N + w * SHARED_BLOCK_SIZE + posx];*/
+        /*bs[posy * SHARED_BLOCK_SIZE + posx] = b[w * SHARED_BLOCK_SIZE * N + blockIdx.y * SHARED_BLOCK_SIZE + posx + posy * N];*/
+
+        as[posy * SHARED_BLOCK_SIZE + posx] = a[blockIdx.y * blockDim.x * N + w * SHARED_BLOCK_SIZE     + posx + posy * N ];
+        bs[posy * SHARED_BLOCK_SIZE + posx] = b[blockIdx.x * blockDim.x     + w * SHARED_BLOCK_SIZE * N + posx + posy * N ];
 
         __syncthreads();
 
@@ -102,7 +105,6 @@ int main() {
     CudaCheckError();
 
     gpuErrchk( cudaMemcpy(c, d_c, size, cudaMemcpyDeviceToHost ));
-    /*cudaMemcpy(c, d_c, size, cudaMemcpyDeviceToHost );*/
 
     gettimeofday(&timevalB2,NULL);
 
