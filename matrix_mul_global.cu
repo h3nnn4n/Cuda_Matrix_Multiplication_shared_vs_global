@@ -86,12 +86,20 @@ int main() {
 
     gettimeofday(&timevalB2,NULL);
 
-    /*for ( int i = 0; i  < N ; i ++ ) {*/
-        /*for ( int j = 0; j  < N ; j ++ ) {*/
-            /*printf("%d ", c[i*N + j]);*/
-        /*}*/
+    for ( int i = 0; i  < N ; i ++ ) {
+        for ( int j = 0; j  < N ; j ++ ) {
+            if ( c[i*N + j] != 0  && i != j ) {
+                fprintf(stderr, "Found nonzero outside the main diagonal\n");
+                abort();
+            } else if ( c[i*N + j] != 1  && i == j ) {
+                fprintf(stderr, "Found something not 1 in the main diagonal\n");
+                abort();
+            }
+            /*printf("%d", c[i*N + j]);*/
+        }
         /*printf("\n");*/
-    /*}*/
+    }
+    printf("Matrix ok\n");
 
     printf("%d %f %f\n", N, timevalB.tv_sec-timevalA.tv_sec+(timevalB.tv_usec-timevalA.tv_usec)/(double)1000000,
                             timevalB2.tv_sec-timevalA2.tv_sec+(timevalB2.tv_usec-timevalA2.tv_usec)/(double)1000000
