@@ -21,11 +21,8 @@ __global__ void matrix_mul(int *a, int *b, int *c) {
         __shared__ int as[SHARED_BLOCK_SIZE * SHARED_BLOCK_SIZE];
         __shared__ int bs[SHARED_BLOCK_SIZE * SHARED_BLOCK_SIZE];
 
-        /*as[posy * SHARED_BLOCK_SIZE + posx] = a[    SHARED_BLOCK_SIZE * N * blockIdx.y + posy * N + w * SHARED_BLOCK_SIZE + posx];*/
-        /*bs[posy * SHARED_BLOCK_SIZE + posx] = b[w * SHARED_BLOCK_SIZE * N + blockIdx.y * SHARED_BLOCK_SIZE + posx + posy * N];*/
-
-        as[posy * SHARED_BLOCK_SIZE + posx] = a[blockIdx.y * blockDim.x * N + w * SHARED_BLOCK_SIZE     + posx + posy * N ];
-        bs[posy * SHARED_BLOCK_SIZE + posx] = b[blockIdx.x * blockDim.x     + w * SHARED_BLOCK_SIZE * N + posx + posy * N ];
+        as[posy * SHARED_BLOCK_SIZE + posx] = a[blockIdx.y * blockDim.x * N + w * blockDim.x     + posx + posy * N ];
+        bs[posy * SHARED_BLOCK_SIZE + posx] = b[blockIdx.x * blockDim.x     + w * blockDim.x * N + posx + posy * N ];
 
         __syncthreads();
 
@@ -45,13 +42,9 @@ int main() {
     int *d_a, *d_b, *d_c;
     int size = N2 * sizeof(int);
 
-    struct timeval timevalA;
-    struct timeval timevalB;
-
-    struct timeval timevalA2;
-    struct timeval timevalB2;
-
-    gettimeofday(&timevalA2,NULL);
+    cudaEvent_t start, stop;
+    cudaEventCreate(&start);
+    cudaEventCreate(&stop);
 
     gpuErrchk( cudaMalloc( (void**) &d_a, size));
     gpuErrchk( cudaMalloc( (void**) &d_b, size));
@@ -82,6 +75,7 @@ int main() {
     printf("Matrix size = %d %d\n", N, N);
     printf("Number of elements = %d\n", N2);
     printf("Grid size = %d %d \n", NBLOCKS, NBLOCKS);
+    printf("Shared size = %d %d \n", SHARED_BLOCK_SIZE, SHARED_BLOCK_SIZE);
     printf("Number of grid elements = %d\n", NBLOCKS * NBLOCKS);
     printf("Number of elements per grid = %d\n", THREADS_PER_BLOCK * THREADS_PER_BLOCK);
     printf("Threads per block = %d %d\n", THREADS_PER_BLOCK, THREADS_PER_BLOCK);
@@ -98,15 +92,17 @@ int main() {
                        THREADS_PER_BLOCK,
                        1                 );
 
-    gettimeofday(&timevalA,NULL);
+    cudaEventRecord(start);
     matrix_mul<<< block, thread >>>(d_a, d_b, d_c);
-    gettimeofday(&timevalB,NULL);
+    cudaEventRecord(stop);
 
-    CudaCheckError();
+    cudaEventSynchronize(stop);
+    float milliseconds = 0;
+    cudaEventElapsedTime(&milliseconds, start, stop);
+
+    /*CudaCheckError();*/
 
     gpuErrchk( cudaMemcpy(c, d_c, size, cudaMemcpyDeviceToHost ));
-
-    gettimeofday(&timevalB2,NULL);
 
     for ( int i = 0; i  < N ; i ++ ) {
         for ( int j = 0; j  < N ; j ++ ) {
@@ -121,18 +117,16 @@ int main() {
         }
         /*printf("\n");*/
     }
-    printf("Matrix ok\n");
+    /*printf("Matrix ok\n");*/
 
-    printf("%d %f %f\n", N, timevalB.tv_sec-timevalA.tv_sec+(timevalB.tv_usec-timevalA.tv_usec)/(double)1000000,
-                            timevalB2.tv_sec-timevalA2.tv_sec+(timevalB2.tv_usec-timevalA2.tv_usec)/(double)1000000
-          );
+    printf("%d %f\n", N, milliseconds);
 
     free(a);
     free(b);
     free(c);
-    gpuErrchk( cudaFree(a));
-    gpuErrchk( cudaFree(b));
-    gpuErrchk( cudaFree(c));
+    gpuErrchk( cudaFree(d_a));
+    gpuErrchk( cudaFree(d_b));
+    gpuErrchk( cudaFree(d_c));
 
     return 0;
 }

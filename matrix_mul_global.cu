@@ -23,13 +23,9 @@ int main() {
     int *d_a, *d_b, *d_c;
     int size = N2 * sizeof(int);
 
-    struct timeval timevalA;
-    struct timeval timevalB;
-
-    struct timeval timevalA2;
-    struct timeval timevalB2;
-
-    gettimeofday(&timevalA2,NULL);
+    cudaEvent_t start, stop;
+    cudaEventCreate(&start);
+    cudaEventCreate(&stop);
 
     gpuErrchk( cudaMalloc( (void**) &d_a, size));
     gpuErrchk( cudaMalloc( (void**) &d_b, size));
@@ -76,15 +72,17 @@ int main() {
                        THREADS_PER_BLOCK,
                        1                 );
 
-    gettimeofday(&timevalA,NULL);
+    cudaEventRecord(start);
     matrix_mul<<< block, thread >>>(d_a, d_b, d_c);
-    gettimeofday(&timevalB,NULL);
+    cudaEventRecord(stop);
 
-    CudaCheckError();
+    cudaEventSynchronize(stop);
+    float milliseconds = 0;
+    cudaEventElapsedTime(&milliseconds, start, stop);
+
+    /*CudaCheckError();*/
 
     gpuErrchk( cudaMemcpy(c, d_c, size, cudaMemcpyDeviceToHost ));
-
-    gettimeofday(&timevalB2,NULL);
 
     for ( int i = 0; i  < N ; i ++ ) {
         for ( int j = 0; j  < N ; j ++ ) {
@@ -99,18 +97,16 @@ int main() {
         }
         /*printf("\n");*/
     }
-    printf("Matrix ok\n");
+    /*printf("Matrix ok\n");*/
 
-    printf("%d %f %f\n", N, timevalB.tv_sec-timevalA.tv_sec+(timevalB.tv_usec-timevalA.tv_usec)/(double)1000000,
-                            timevalB2.tv_sec-timevalA2.tv_sec+(timevalB2.tv_usec-timevalA2.tv_usec)/(double)1000000
-          );
+    printf("%d %f\n", N, milliseconds);
 
     free(a);
     free(b);
     free(c);
-    gpuErrchk( cudaFree(a));
-    gpuErrchk( cudaFree(b));
-    gpuErrchk( cudaFree(c));
+    gpuErrchk( cudaFree(d_a));
+    gpuErrchk( cudaFree(d_b));
+    gpuErrchk( cudaFree(d_c));
 
     return 0;
 }
