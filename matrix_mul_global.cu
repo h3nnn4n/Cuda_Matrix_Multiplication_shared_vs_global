@@ -5,6 +5,7 @@
 #include<time.h>
 
 #include "info.h"
+#include "err.h"
 
 __global__ void matrix_mul(int *a, int *b, int *c) {
     int col = blockIdx.x * blockDim.x + threadIdx.x;
@@ -29,9 +30,9 @@ int main() {
 
     gettimeofday(&timevalA2,NULL);
 
-    cudaMalloc( (void**) &d_a, size);
-    cudaMalloc( (void**) &d_b, size);
-    cudaMalloc( (void**) &d_c, size);
+    gpuErrchk( cudaMalloc( (void**) &d_a, size));
+    gpuErrchk( cudaMalloc( (void**) &d_b, size));
+    gpuErrchk( cudaMalloc( (void**) &d_c, size));
 
     a = (int*) malloc ( size );
     b = (int*) malloc ( size );
@@ -59,8 +60,8 @@ int main() {
     printf("Check %d = %d\n", THREADS_PER_BLOCK2 * NBLOCKS * NBLOCKS, N2);
 #endif
 
-    cudaMemcpy( d_a, a, size, cudaMemcpyHostToDevice );
-    cudaMemcpy( d_b, b, size, cudaMemcpyHostToDevice );
+    gpuErrchk( cudaMemcpy( d_a, a, size, cudaMemcpyHostToDevice ));
+    gpuErrchk( cudaMemcpy( d_b, b, size, cudaMemcpyHostToDevice ));
 
     dim3 block  = dim3(NBLOCKS,
                        NBLOCKS,
@@ -74,7 +75,7 @@ int main() {
     gettimeofday(&timevalB,NULL);
 
 
-    cudaMemcpy(c, d_c, size, cudaMemcpyDeviceToHost );
+    gpuErrchk( cudaMemcpy(c, d_c, size, cudaMemcpyDeviceToHost ));
 
     gettimeofday(&timevalB2,NULL);
 
@@ -92,9 +93,9 @@ int main() {
     free(a);
     free(b);
     free(c);
-    cudaFree(a);
-    cudaFree(b);
-    cudaFree(c);
+    gpuErrchk( cudaFree(a));
+    gpuErrchk( cudaFree(b));
+    gpuErrchk( cudaFree(c));
 
     return 0;
 }
