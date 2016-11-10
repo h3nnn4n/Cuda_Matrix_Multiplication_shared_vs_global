@@ -1,8 +1,8 @@
 #include <stdio.h>
 #include <cuda.h>
 #include <cuda_runtime.h>
-#include<sys/time.h>
-#include<time.h>
+#include <sys/time.h>
+#include <time.h>
 
 #include "info.h"
 #include "err.h"
@@ -26,7 +26,8 @@ int main() {
     struct timeval timevalA;
     struct timeval timevalB;
 
-    struct timeval timevalA2; struct timeval timevalB2;
+    struct timeval timevalA2;
+    struct timeval timevalB2;
 
     gettimeofday(&timevalA2,NULL);
 
@@ -38,6 +39,10 @@ int main() {
     b = (int*) malloc ( size );
     c = (int*) malloc ( size );
 
+    if ( a == NULL ) { fprintf(stderr, "Failed to allocate a\n"); abort(); }
+    if ( b == NULL ) { fprintf(stderr, "Failed to allocate b\n"); abort(); }
+    if ( c == NULL ) { fprintf(stderr, "Failed to allocate c\n"); abort(); }
+
     for ( int i = 0; i  < N ; i ++ ) {
         for ( int j = 0; j  < N ; j ++ ) {
             a[i*N + j] = 0;
@@ -47,7 +52,8 @@ int main() {
                 a[i*N + j] = 1;
                 b[i*N + j] = 1;
                 c[i*N + j] = 1;
-            } }
+            }
+        }
     }
 
 #ifdef __output

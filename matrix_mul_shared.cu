@@ -46,7 +46,8 @@ int main() {
     struct timeval timevalA;
     struct timeval timevalB;
 
-    struct timeval timevalA2; struct timeval timevalB2;
+    struct timeval timevalA2;
+    struct timeval timevalB2;
 
     gettimeofday(&timevalA2,NULL);
 
@@ -57,6 +58,10 @@ int main() {
     a = (int*) malloc ( size );
     b = (int*) malloc ( size );
     c = (int*) malloc ( size );
+
+    if ( a == NULL ) { fprintf(stderr, "Failed to allocate a\n"); abort(); }
+    if ( b == NULL ) { fprintf(stderr, "Failed to allocate b\n"); abort(); }
+    if ( c == NULL ) { fprintf(stderr, "Failed to allocate c\n"); abort(); }
 
     for ( int i = 0; i  < N ; i ++ ) {
         for ( int j = 0; j  < N ; j ++ ) {
