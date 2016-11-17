@@ -94,29 +94,29 @@ int main() {
 
     cudaEventRecord(start);
     matrix_mul<<< block, thread >>>(d_a, d_b, d_c);
+    cudaDeviceSynchronize();
+    /*CudaCheckError();*/
     cudaEventRecord(stop);
 
     cudaEventSynchronize(stop);
     float milliseconds = 0;
     cudaEventElapsedTime(&milliseconds, start, stop);
 
-    /*CudaCheckError();*/
-
     gpuErrchk( cudaMemcpy(c, d_c, size, cudaMemcpyDeviceToHost ));
 
-    for ( int i = 0; i  < N ; i ++ ) {
-        for ( int j = 0; j  < N ; j ++ ) {
-            if ( c[i*N + j] != 0  && i != j ) {
-                fprintf(stderr, "Found nonzero outside the main diagonal\n");
-                abort();
-            } else if ( c[i*N + j] != 1  && i == j ) {
-                fprintf(stderr, "Found something not 1 in the main diagonal\n");
-                abort();
-            }
+    /*for ( int i = 0; i  < N ; i ++ ) {*/
+        /*for ( int j = 0; j  < N ; j ++ ) {*/
+            /*if ( c[i*N + j] != 0  && i != j ) {*/
+                /*fprintf(stderr, "Found nonzero outside the main diagonal\n");*/
+                /*abort();*/
+            /*} else if ( c[i*N + j] != 1  && i == j ) {*/
+                /*fprintf(stderr, "Found something not 1 in the main diagonal\n");*/
+                /*abort();*/
+            /*}*/
             /*printf("%d", c[i*N + j]);*/
-        }
+        /*}*/
         /*printf("\n");*/
-    }
+    /*}*/
     /*printf("Matrix ok\n");*/
 
     printf("%d %f\n", N, milliseconds);
